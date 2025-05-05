@@ -1,7 +1,7 @@
 
 function page() {
     return (
-        <div>Tiktok page</div>
+        <div>Login page</div>
     )
 }
 

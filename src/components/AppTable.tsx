@@ -60,7 +60,7 @@ function AppTable(props: IProps) {
                 <td>{item.author}</td>
                 <td>
                   <Button variant="success">
-                    <Link href={`/blogs/${item.id}`} className='text-decoration-none text-white'>
+                    <Link href={`/politics/${item.id}`} className='text-decoration-none text-white'>
                       View
                     </Link>
                   </Button>
