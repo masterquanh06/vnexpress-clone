@@ -1,28 +1,48 @@
 'use client';
+import { login } from '@/services/authService';
+import { useAuthStore } from '@/stores/authStore';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
+    const router = useRouter();
+    const setAccessToken = useAuthStore((state) => state.setAccessToken);
+
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [validated, setValidated] = useState(false);
     const [showError, setShowError] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
-    const handleSubmit = (event: any) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = event.currentTarget;
 
-        if (form.checkValidity() === false) {
+        if (!form.checkValidity()) {
             event.stopPropagation();
-        } else {
-            // Mô phỏng xử lý đăng nhập
-            if (email === 'admin@example.com' && password === 'password') {
-                alert('Đăng nhập thành công!');
+            setValidated(true);
+            return;
+        }
+
+        try {
+            const res = await login({ username, password });
+            const token = res.data.accessToken;
+            const user = res.data.user || res.data;
+            console.log("dsadas", res.data);
+            localStorage.setItem('accessToken', token);
+            if (user.admin === true) {
+                router.push('/admin');
             } else {
-                setShowError(true);
+                router.push('/');
             }
+
+        } catch (error: any) {
+            console.error(error);
+            setShowError(true);
+            setErrorMessage(error?.response?.data?.message || 'Đăng nhập thất bại.');
         }
 
         setValidated(true);
@@ -41,22 +61,22 @@ export default function LoginPage() {
 
                             {showError && (
                                 <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
-                                    Email hoặc mật khẩu không chính xác.
+                                    {errorMessage}
                                 </Alert>
                             )}
 
                             <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                                <Form.Group className="mb-3" controlId="email">
-                                    <Form.Label>Email</Form.Label>
+                                <Form.Group className="mb-3" controlId="username">
+                                    <Form.Label>Username</Form.Label>
                                     <Form.Control
-                                        type="email"
-                                        placeholder="Nhập email của bạn"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        type="username"
+                                        placeholder="Nhập username của bạn"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
                                         required
                                     />
                                     <Form.Control.Feedback type="invalid">
-                                        Vui lòng nhập email hợp lệ.
+                                        Vui lòng nhập username hợp lệ.
                                     </Form.Control.Feedback>
                                 </Form.Group>
 
@@ -75,14 +95,9 @@ export default function LoginPage() {
                                     </Form.Control.Feedback>
 
                                     <Form.Group className="my-3 d-flex align-items-center justify-content-between">
-                                        <Form.Check
-                                            required
-                                            label="Nhớ mật khẩu"
-
-                                        />
+                                        <Form.Check label="Nhớ mật khẩu" />
                                         <a href="#" className="text-decoration-none small">Quên mật khẩu?</a>
                                     </Form.Group>
-
                                 </Form.Group>
 
                                 <Button variant="primary" type="submit" className="w-100 py-2">
@@ -91,7 +106,10 @@ export default function LoginPage() {
 
                                 <div className="text-center mt-4">
                                     <p className="mb-0">
-                                        Chưa có tài khoản? <Link href="/register" className="text-decoration-none fw-bold">Đăng ký</Link>
+                                        Chưa có tài khoản?{' '}
+                                        <Link href="/register" className="text-decoration-none fw-bold">
+                                            Đăng ký
+                                        </Link>
                                     </p>
                                 </div>
                             </Form>
