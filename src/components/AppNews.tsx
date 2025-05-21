@@ -3,7 +3,7 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container } from 'react-bootstrap';
-import useSWR from 'swr';
+import useSWR, { mutate } from 'swr';
 
 const fetcher = async (url: string) => await axios.get(url).then(res => res.data);
 
@@ -17,6 +17,7 @@ export default function AppNews() {
             revalidateOnFocus: false,
             revalidateOnReconnect: false,
         }
+        
     );
 
     if (isLoading) return <p>Đang tải...</p>;

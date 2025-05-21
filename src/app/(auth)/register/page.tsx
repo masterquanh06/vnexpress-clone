@@ -1,29 +1,38 @@
-// pages/register.js
 'use client';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
+import { register } from '@/services/authService';
+
+type FormData = {
+    username: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+};
 
 export default function Register() {
+    const router = useRouter();
     const [validated, setValidated] = useState(false);
     const [showError, setShowError] = useState(false);
-    const [formData, setFormData] = useState({
-        fullName: '',
+    const [errorMessage, setErrorMessage] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const [formData, setFormData] = useState<FormData>({
+        username: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
     });
 
-    const handleChange = (e: any) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (event: any) => {
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = event.currentTarget;
 
@@ -35,12 +44,25 @@ export default function Register() {
 
         if (formData.password !== formData.confirmPassword) {
             setShowError(true);
+            setErrorMessage('Mật khẩu và xác nhận mật khẩu không khớp.');
             return;
         }
 
-        // Xử lý đăng ký ở đây
-        console.log('Form data:', formData);
-        alert('Đăng ký thành công!');
+        try {
+            setLoading(true);
+            await register({
+                username: formData.username,
+                email: formData.email,
+                password: formData.password,
+            });
+            alert('Đăng ký thành công!');
+            router.push('/login');
+        } catch (error: any) {
+            setShowError(true);
+            setErrorMessage(error.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -48,10 +70,6 @@ export default function Register() {
             <Head>
                 <title>Đăng ký tài khoản</title>
                 <meta name="description" content="Trang đăng ký tài khoản" />
-                <link
-                    rel="stylesheet"
-                    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-                />
             </Head>
 
             <Container fluid className="bg-light min-vh-100 d-flex align-items-center justify-content-center py-5">
@@ -66,23 +84,23 @@ export default function Register() {
 
                                 {showError && (
                                     <Alert variant="danger" onClose={() => setShowError(false)} dismissible>
-                                        Mật khẩu và xác nhận mật khẩu không khớp.
+                                        {errorMessage}
                                     </Alert>
                                 )}
 
                                 <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                                    <Form.Group className="mb-3" controlId="fullName">
-                                        <Form.Label>Họ và tên</Form.Label>
+                                    <Form.Group className="mb-3" controlId="username">
+                                        <Form.Label>Tên người dùng</Form.Label>
                                         <Form.Control
                                             type="text"
-                                            name="fullName"
-                                            placeholder="Nhập họ và tên của bạn"
-                                            value={formData.fullName}
+                                            name="username"
+                                            placeholder="Nhập tên người dùng"
+                                            value={formData.username}
                                             onChange={handleChange}
                                             required
                                         />
                                         <Form.Control.Feedback type="invalid">
-                                            Vui lòng nhập họ và tên.
+                                            Vui lòng nhập tên người dùng.
                                         </Form.Control.Feedback>
                                     </Form.Group>
 
@@ -91,7 +109,7 @@ export default function Register() {
                                         <Form.Control
                                             type="email"
                                             name="email"
-                                            placeholder="Nhập địa chỉ email của bạn"
+                                            placeholder="Nhập địa chỉ email"
                                             value={formData.email}
                                             onChange={handleChange}
                                             required
@@ -106,7 +124,7 @@ export default function Register() {
                                         <Form.Control
                                             type="password"
                                             name="password"
-                                            placeholder="Nhập mật khẩu của bạn"
+                                            placeholder="Nhập mật khẩu"
                                             value={formData.password}
                                             onChange={handleChange}
                                             required
@@ -122,7 +140,7 @@ export default function Register() {
                                         <Form.Control
                                             type="password"
                                             name="confirmPassword"
-                                            placeholder="Nhập lại mật khẩu của bạn"
+                                            placeholder="Nhập lại mật khẩu"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
                                             required
@@ -142,8 +160,8 @@ export default function Register() {
                                         />
                                     </Form.Group>
 
-                                    <Button variant="primary" type="submit" className="w-100 py-2">
-                                        Đăng ký
+                                    <Button variant="primary" type="submit" className="w-100 py-2" disabled={loading}>
+                                        {loading ? <Spinner animation="border" size="sm" /> : 'Đăng ký'}
                                     </Button>
 
                                     <div className="text-center mt-4">

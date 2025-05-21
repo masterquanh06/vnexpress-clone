@@ -10,7 +10,7 @@ import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
 export default function LoginPage() {
     const router = useRouter();
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
-
+    const setUser = useAuthStore((state) => state.setUser);
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [validated, setValidated] = useState(false);
@@ -31,13 +31,13 @@ export default function LoginPage() {
             const res = await login({ username, password });
             const token = res.data.accessToken;
             const user = res.data.user || res.data;
-            console.log("dsadas", res.data);
             localStorage.setItem('accessToken', token);
-            if (user.admin === true) {
-                router.push('/admin');
-            } else {
-                router.push('/');
-            }
+            localStorage.setItem('user', JSON.stringify(user));
+            setAccessToken(token);
+            setUser(user);
+            console.log('Redirecting to:', user.admin === true ? '/admin' : '/');
+            router.push(user.admin === true ? '/admin' : '/');
+
 
         } catch (error: any) {
             console.error(error);
